@@ -11,9 +11,15 @@ local files = {
     "fpdf"  
     }
 
+mash:Try( fs:Rmall(targetDir), 20 )    
 mash:Try( fs:Mkdir(targetDir), 21 )
 
-mash:Try( mash:Exec("foo"), 21 )
+if mash:Exec("foo"):Failed() then print_error("failed to exec foo") end
+
+res = mash:Exec("foo")
+if res:Failed() then
+    print_error(res:ErrorText())
+end
 
 for i,f in ipairs(files) do
     mash:Try( fs:CopyFile(sourceDir.."/"..f, targetDir.."/"..f), 22 )

@@ -41,3 +41,13 @@ func (h *FSHandler) CopyFile(src, target string) Result {
 	}
 	return NewResult(ctx, "", nil)
 }
+
+func (h *FSHandler) Rmall(name string) Result {
+	err := os.RemoveAll(name)
+	return NewResult(fmt.Sprintf("fs:rmall (%s)", name), "", err)
+}
+
+func (h *FSHandler) Rm(file string) Result {
+	err := os.Remove(file)
+	return NewResult(fmt.Sprintf("fs:rm (%s)", file), "", err)
+}

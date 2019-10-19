@@ -16,12 +16,12 @@ func NewResult(ctx string, text string, err error) Result {
 
 var NoResult = NewResult("", "", nil)
 
-func (r Result) IsError() bool {
+func (r Result) Failed() bool {
 	return r.err != nil
 }
 
-func (r Result) IsOk() bool {
-	return !r.IsError()
+func (r Result) Ok() bool {
+	return !r.Failed()
 }
 
 func (r Result) Context() string {

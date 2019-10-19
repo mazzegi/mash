@@ -83,7 +83,7 @@ func (m *Mash) Run() error {
 }
 
 func (m *Mash) Try(r Result, exitCode int) {
-	if !r.IsError() {
+	if r.Ok() {
 		return
 	}
 	m.formatter.Errorf("%s: %s", r.Context(), r.ErrorText())
