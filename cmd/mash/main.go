@@ -1,12 +1,10 @@
 package main
 
 import (
-	"bufio"
 	"os"
 	"strings"
 
 	"github.com/mazzegi/mash"
-	"github.com/pkg/errors"
 )
 
 func main() {
@@ -14,7 +12,7 @@ func main() {
 		errorf("to less arguments for mash. Usage: 'mash script.lua'")
 		os.Exit(1)
 	}
-	script, err := prepareScript(os.Args[1])
+	script, err := mash.LoadScript(os.Args[1])
 	if err != nil {
 		errorf("prepare script: %v", err)
 		os.Exit(2)
@@ -24,36 +22,31 @@ func main() {
 		errorf("new mash: %v", err)
 		os.Exit(3)
 	}
+
+	//register all default handler
+	m.RegisterDefaultHandler()
+
+	//overwrite lua:print
+	m.RegisterLuaFunc("print", func(args ...string) mash.Result {
+		return infof(strings.Join(args, " "))
+	})
+	//register print_error
+	m.RegisterLuaFunc("print_error", func(args ...string) mash.Result {
+		return errorf(strings.Join(args, " "))
+	})
+
 	if err := m.Run(); err != nil {
 		errorf("run-mash: %v", err)
 		os.Exit(4)
 	}
 }
 
-func prepareScript(file string) (string, error) {
-	f, err := os.Open(file)
-	if err != nil {
-		return "", errors.Wrapf(err, "open-file (%s)", file)
-	}
-	defer f.Close()
-
-	var lines []string
-	scanner := bufio.NewScanner(f)
-	for scanner.Scan() {
-		line := scanner.Text()
-		if strings.HasPrefix(line, "#!") {
-			// removecomment out shebang line
-			line = "-- " + line
-		}
-		lines = append(lines, line)
-	}
-	if scanner.Err() != nil {
-		return "", errors.Errorf("error scanning script-file : %v", scanner.Err())
-	}
-
-	return strings.Join(lines, "\n"), nil
+func infof(format string, args ...interface{}) mash.Result {
+	mash.DefaultFormatter().Infof(format, args...)
+	return mash.NoResult
 }
 
-func errorf(format string, args ...interface{}) {
+func errorf(format string, args ...interface{}) mash.Result {
 	mash.DefaultFormatter().Errorf(format, args...)
+	return mash.NoResult
 }

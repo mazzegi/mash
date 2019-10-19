@@ -14,6 +14,8 @@ func NewResult(ctx string, text string, err error) Result {
 	}
 }
 
+var NoResult = NewResult("", "", nil)
+
 func (r Result) IsError() bool {
 	return r.err != nil
 }
