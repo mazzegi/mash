@@ -29,15 +29,13 @@ func WithFormatter(f Formatter) Option {
 
 type Mash struct {
 	args      []string
-	script    string
 	formatter Formatter
 	lstate    *lua.LState
 }
 
-func New(script string, options ...Option) (*Mash, error) {
+func New(options ...Option) (*Mash, error) {
 	m := &Mash{
 		args:      []string{},
-		script:    script,
 		formatter: DefaultFormatter(),
 		lstate:    lua.NewState(),
 	}
@@ -70,16 +68,16 @@ func (m *Mash) RegisterDefaultHandler() {
 	m.RegisterHandler("fs", NewFSHandler())
 }
 
+func (m *Mash) RunScript(script string) error {
+	return m.lstate.DoString(script)
+}
+
 func (m *Mash) Infof(format string, args ...interface{}) {
 	m.formatter.Infof(format, args...)
 }
 
 func (m *Mash) Errorf(format string, args ...interface{}) {
 	m.formatter.Errorf(format, args...)
-}
-
-func (m *Mash) Run() error {
-	return m.lstate.DoString(m.script)
 }
 
 func (m *Mash) Try(r Result, exitCode int) {

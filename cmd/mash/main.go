@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bufio"
+	"fmt"
 	"os"
 	"strings"
 
@@ -8,16 +10,15 @@ import (
 )
 
 func main() {
-	if len(os.Args) < 2 {
-		errorf("to less arguments for mash. Usage: 'mash script.lua'")
-		os.Exit(1)
+	var interactive = false
+	for _, arg := range os.Args {
+		if arg == "-i" {
+			interactive = true
+			break
+		}
 	}
-	script, err := mash.LoadScript(os.Args[1])
-	if err != nil {
-		errorf("prepare script: %v", err)
-		os.Exit(2)
-	}
-	m, err := mash.New(script, mash.WithArgs(os.Args[2:]...))
+
+	m, err := mash.New(mash.WithArgs(os.Args...))
 	if err != nil {
 		errorf("new mash: %v", err)
 		os.Exit(3)
@@ -35,9 +36,31 @@ func main() {
 		return errorf(strings.Join(args, " "))
 	})
 
-	if err := m.Run(); err != nil {
-		errorf("run-mash: %v", err)
-		os.Exit(4)
+	if !interactive {
+		if len(os.Args) < 2 {
+			errorf("missing script argument for non-interactive (batch) mode")
+			os.Exit(1)
+		}
+		script, err := mash.LoadScript(os.Args[1])
+		if err != nil {
+			errorf("prepare script: %v", err)
+			os.Exit(2)
+		}
+		if err := m.RunScript(script); err != nil {
+			errorf("run-mash: %v", err)
+			os.Exit(4)
+		}
+	} else {
+		prompt := func() { fmt.Printf("> ") }
+		scanner := bufio.NewScanner(os.Stdin)
+		prompt()
+		for scanner.Scan() {
+			s := scanner.Text()
+			if err := m.RunScript(s); err != nil {
+				errorf("run-mash: %v", err)
+			}
+			prompt()
+		}
 	}
 }
 
