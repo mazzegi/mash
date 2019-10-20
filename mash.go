@@ -45,8 +45,7 @@ func New(options ...Option) (*Mash, error) {
 			return nil, err
 		}
 	}
-	//register this as lua-global
-	m.lstate.SetGlobal("mash", luar.New(m.lstate, m))
+	m.RegisterHandler("mash", NewCoreHandler(m.args, m.formatter))
 	return m, nil
 }
 
@@ -66,44 +65,58 @@ func (m *Mash) RegisterHandler(name string, h Handler) {
 
 func (m *Mash) RegisterDefaultHandler() {
 	m.RegisterHandler("fs", NewFSHandler())
+	m.RegisterHandler("time", NewTimeHandler())
 }
 
 func (m *Mash) RunScript(script string) error {
 	return m.lstate.DoString(script)
 }
 
-func (m *Mash) Infof(format string, args ...interface{}) {
-	m.formatter.Infof(format, args...)
+//CoreHandler is the handler, to handle basic mash commands
+type CoreHandler struct {
+	args      []string
+	formatter Formatter
 }
 
-func (m *Mash) Errorf(format string, args ...interface{}) {
-	m.formatter.Errorf(format, args...)
+func NewCoreHandler(args []string, formatter Formatter) *CoreHandler {
+	return &CoreHandler{
+		args:      args,
+		formatter: formatter,
+	}
 }
 
-func (m *Mash) Try(r Result, exitCode int) {
+func (h *CoreHandler) Infof(format string, args ...interface{}) {
+	h.formatter.Infof(format, args...)
+}
+
+func (h *CoreHandler) Errorf(format string, args ...interface{}) {
+	h.formatter.Errorf(format, args...)
+}
+
+func (h *CoreHandler) Try(r Result, exitCode int) {
 	if r.Ok() {
 		return
 	}
-	m.formatter.Errorf("%s: %s", r.Context(), r.ErrorText())
-	m.Exit(exitCode)
+	h.formatter.Errorf("%s: %s", r.Context(), r.ErrorText())
+	h.Exit(exitCode)
 }
 
-func (m *Mash) Exit(code int) {
+func (h *CoreHandler) Exit(code int) {
 	os.Exit(code)
 }
 
-func (m *Mash) NumArgs() int {
-	return len(m.args)
+func (h *CoreHandler) NumArgs() int {
+	return len(h.args)
 }
 
-func (m *Mash) Arg(i int) string {
-	if i < 0 || i >= len(m.args) {
+func (h *CoreHandler) Arg(i int) string {
+	if i < 0 || i >= len(h.args) {
 		return ""
 	}
-	return m.args[i]
+	return h.args[i]
 }
 
-func (m *Mash) Exec(prg string, args ...string) Result {
+func (h *CoreHandler) Exec(prg string, args ...string) Result {
 	cmd := exec.Command(prg, args...)
 	bs, err := cmd.CombinedOutput()
 	return NewResult(fmt.Sprintf("exec (%s)", prg), string(bs), err)

@@ -3,7 +3,10 @@ package mash
 import (
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
+	"path/filepath"
+	"strings"
 )
 
 type FSHandler struct {
@@ -42,12 +45,24 @@ func (h *FSHandler) CopyFile(src, target string) Result {
 	return NewResult(ctx, "", nil)
 }
 
-func (h *FSHandler) Rmall(name string) Result {
+func (h *FSHandler) RemoveAll(name string) Result {
 	err := os.RemoveAll(name)
 	return NewResult(fmt.Sprintf("fs:rmall (%s)", name), "", err)
 }
 
-func (h *FSHandler) Rm(file string) Result {
+func (h *FSHandler) Remove(file string) Result {
 	err := os.Remove(file)
 	return NewResult(fmt.Sprintf("fs:rm (%s)", file), "", err)
+}
+
+func (h *FSHandler) WriteFile(file string, data []byte) Result {
+	ctx := fmt.Sprintf("write file:  (%s)", file)
+	err := ioutil.WriteFile(file, data, os.ModePerm)
+	return NewResult(ctx, "", err)
+}
+
+func (h *FSHandler) Glob(pattern string) Result {
+	ctx := fmt.Sprintf("glob: (%s)", pattern)
+	m, err := filepath.Glob(pattern)
+	return NewResult(ctx, strings.Join(m, "\n"), err)
 }

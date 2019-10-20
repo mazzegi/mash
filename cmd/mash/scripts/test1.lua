@@ -6,3 +6,10 @@ print("num-args:", numargs)
 for i=0,numargs-1 do
     print("arg", i, mash:Arg(i))
 end
+
+if mash:Exec("foo"):Failed() then print_error("failed to exec foo") end
+
+res = mash:Exec("foo")
+if res:Failed() then
+    print_error(res:ErrorText())
+end

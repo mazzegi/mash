@@ -19,7 +19,7 @@ func LuaStringArgs(l *lua.LState) []string {
 func LuaLGFunc(f LuaFunc) lua.LGFunction {
 	return func(l *lua.LState) int {
 		res := f(LuaStringArgs(l)...)
-		l.Push(lua.LString(res.Text()))
+		l.Push(lua.LString(res.Value()))
 		return 1
 	}
 }
